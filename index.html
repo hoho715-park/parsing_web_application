@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Code Parsing & Summary Web App</title>
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- JSZip -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <!-- Meriyah Parser -->
+    <script src="https://unpkg.com/meriyah/dist/meriyah.umd.js"></script>
+</head>
+
+<body>
+
+    <h1>⚡ JavaScript Code Parsing + AST Summary</h1>
+
+    <label for="zipUpload" id="dropZone" class="upload-box">
+        <p>📦 ZIP 파일 업로드 또는 드래그 앤 드롭</p>
+        <p style="font-size: 13px; color:#aaa;">(JavaScript 파일 포함)</p>
+        <button id="fileButton" type="button" class="file-select-btn">파일 선택</button>
+    </label>
+
+    <input type="file" id="zipUpload" accept=".zip">
+
+    <div id="summaryBox">📝 AST 요약이 여기에 표시됩니다.</div>
+
+    <!-- 코드 결과 1: Meriyah로 파싱한 app.js AST -->
+    <div class="code-section">
+        <div class="code-title">📄 app.js AST (Meriyah 파싱 결과)</div>
+        <div id="result" class="code-box">AST 전체 JSON이 여기에 표시됩니다.</div>
+    </div>
+
+    <!-- 코드 결과 2: ZIP 내부 ast.json 파일 내용 -->
+    <div class="code-section" id="astJsonSection" style="display:none;">
+        <div class="code-title">📁 ZIP 내부 ast.json (이미 존재하는 AST 파일)</div>
+        <div id="astJsonBox" class="code-box">ZIP 내부 ast.json 결과가 여기에 표시됩니다.</div>
+    </div>
+
+    <!-- External JavaScript -->
+    <script src="app.js"></script>
+
+</body>
+</html>
