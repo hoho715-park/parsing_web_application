@@ -13,6 +13,12 @@
 
     <!-- Meriyah Parser -->
     <script src="https://unpkg.com/meriyah/dist/meriyah.umd.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Mermaid.js for Class Diagram -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 </head>
 
 <body>
@@ -57,7 +63,10 @@
         <!-- 상단 헤더 -->
         <header class="result-header">
             <h1>⚡ AST 분석 결과</h1>
-            <button id="newAnalysisBtn" class="new-analysis-btn">+ 새 분석</button>
+            <div class="header-buttons">
+                <button id="toggleViewBtn" class="toggle-view-btn">📐 다이어그램 보기</button>
+                <button id="newAnalysisBtn" class="new-analysis-btn">+ 새 분석</button>
+            </div>
         </header>
 
         <!-- 메인 컨텐츠 (좌/우 분할) -->
@@ -67,6 +76,59 @@
             <div class="result-left">
                 <div id="summaryBox" class="summary-box">
                     <!-- 분석 결과가 여기에 표시됩니다 -->
+                </div>
+
+                <!-- 차트 영역 -->
+                <div class="charts-container" id="chartsContainer">
+                    <!-- 상단 차트 row -->
+                    <div class="chart-row">
+                        <div class="chart-card">
+                            <div class="chart-title">🎯 코드 품질 점수</div>
+                            <canvas id="qualityGaugeChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">📊 품질 지표 분석</div>
+                            <canvas id="qualityBarChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 중단 차트 row -->
+                    <div class="chart-row">
+                        <div class="chart-card wide">
+                            <div class="chart-title">📈 확장 메트릭 레이더</div>
+                            <canvas id="metricsRadarChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 하단 차트 row -->
+                    <div class="chart-row">
+                        <div class="chart-card">
+                            <div class="chart-title">🔥 복잡도 분포</div>
+                            <canvas id="complexityDoughnutChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">📉 메트릭 상세</div>
+                            <canvas id="metricsBarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 클래스 다이어그램 영역 (기본 숨김) -->
+                <div class="diagram-container" id="diagramContainer" style="display: none;">
+                    <div class="diagram-card">
+                        <div class="diagram-title">📐 클래스 다이어그램</div>
+                        <div class="diagram-content" id="classDiagram"></div>
+                    </div>
+                    
+                    <div class="diagram-card">
+                        <div class="diagram-title">🔗 함수 호출 관계</div>
+                        <div class="diagram-content" id="callDiagram"></div>
+                    </div>
+
+                    <div class="diagram-card">
+                        <div class="diagram-title">📋 구조 요약</div>
+                        <div class="structure-summary" id="structureSummary"></div>
+                    </div>
                 </div>
             </div>
 
