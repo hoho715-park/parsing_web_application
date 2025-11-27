@@ -1,6 +1,7 @@
 /**
  * JavaScript Code Parsing & Summary Web App
  * AST 파싱 및 코드 품질 분석
+ * v2.0 - UI/UX 고도화
  */
 
 // ================================
@@ -10,15 +11,78 @@ let latestSummary = null;
 let latestAST = null;
 
 // ================================
-// DOM 참조
+// DOM 참조 - 화면
+// ================================
+const uploadScreen = document.getElementById("uploadScreen");
+const loadingScreen = document.getElementById("loadingScreen");
+const resultScreen = document.getElementById("resultScreen");
+
+// ================================
+// DOM 참조 - 업로드 화면
 // ================================
 const dropZone = document.getElementById("dropZone");
 const zipInput = document.getElementById("zipUpload");
 const fileButton = document.getElementById("fileButton");
+
+// ================================
+// DOM 참조 - 로딩 화면
+// ================================
+const loadingFileName = document.getElementById("loadingFileName");
+
+// ================================
+// DOM 참조 - 결과 화면
+// ================================
 const summaryBox = document.getElementById("summaryBox");
 const resultBox = document.getElementById("result");
 const astJsonBox = document.getElementById("astJsonBox");
 const astJsonSection = document.getElementById("astJsonSection");
+const newAnalysisBtn = document.getElementById("newAnalysisBtn");
+
+// ================================
+// 화면 전환 함수
+// ================================
+
+/**
+ * 특정 화면으로 전환
+ * @param {string} screenId - 전환할 화면 ID
+ */
+function showScreen(screenId) {
+    // 모든 화면 숨기기
+    document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+    });
+
+    // 지정된 화면 표시
+    const targetScreen = document.getElementById(screenId);
+    if (targetScreen) {
+        targetScreen.classList.add('active');
+    }
+}
+
+/**
+ * 업로드 화면으로 이동
+ */
+function goToUploadScreen() {
+    showScreen('uploadScreen');
+    // 입력 초기화
+    zipInput.value = '';
+}
+
+/**
+ * 로딩 화면으로 이동
+ * @param {string} fileName - 로딩 중인 파일 이름
+ */
+function goToLoadingScreen(fileName) {
+    loadingFileName.textContent = fileName;
+    showScreen('loadingScreen');
+}
+
+/**
+ * 결과 화면으로 이동
+ */
+function goToResultScreen() {
+    showScreen('resultScreen');
+}
 
 // ================================
 // 이벤트 리스너 설정
@@ -30,6 +94,13 @@ const astJsonSection = document.getElementById("astJsonSection");
 fileButton.addEventListener("click", (e) => {
     e.preventDefault();
     zipInput.click();
+});
+
+/**
+ * 새 분석 버튼 클릭
+ */
+newAnalysisBtn.addEventListener("click", () => {
+    goToUploadScreen();
 });
 
 /**
@@ -74,45 +145,74 @@ zipInput.addEventListener("change", (e) => {
  * @param {File} file - ZIP 파일
  */
 async function handleZipFile(file) {
-    const jszip = new JSZip();
-    const zip = await jszip.loadAsync(file);
+    // 로딩 화면으로 전환
+    goToLoadingScreen(file.name);
 
-    let appJsFile = null;
-    let astJsonFile = null;
+    // 최소 로딩 시간 (UX 향상)
+    const minLoadingTime = 1000;
+    const startTime = Date.now();
 
-    // ZIP 내부 파일 탐색
-    zip.forEach((path, entry) => {
-        if (path.endsWith("app.js")) appJsFile = entry;
-        if (path.endsWith("ast.json")) astJsonFile = entry;
-    });
+    try {
+        const jszip = new JSZip();
+        const zip = await jszip.loadAsync(file);
 
-    // app.js 파일 확인
-    if (!appJsFile) {
-        summaryBox.textContent = "❌ ZIP 안에 app.js 파일이 없습니다!";
-        return;
-    }
+        let appJsFile = null;
+        let astJsonFile = null;
 
-    // app.js 코드 읽기 및 파싱
-    const code = await appJsFile.async("string");
-    const ast = meriyah.parse(code, { module: true, next: true, loc: true });
-    latestAST = ast;
+        // ZIP 내부 파일 탐색
+        zip.forEach((path, entry) => {
+            if (path.endsWith("app.js")) appJsFile = entry;
+            if (path.endsWith("ast.json")) astJsonFile = entry;
+        });
 
-    // AST 분석
-    const summary = analyzeAST(ast);
-    latestSummary = summary;
+        // app.js 파일 확인
+        if (!appJsFile) {
+            alert("❌ ZIP 안에 app.js 파일이 없습니다!");
+            goToUploadScreen();
+            return;
+        }
 
-    // UI 업데이트
-    displaySummary(appJsFile.name, summary);
-    resultBox.textContent = JSON.stringify(ast, null, 2);
+        // app.js 코드 읽기 및 파싱
+        const code = await appJsFile.async("string");
+        const ast = meriyah.parse(code, { module: true, next: true, loc: true });
+        latestAST = ast;
 
-    // ZIP 내부 ast.json 파일 처리
-    if (astJsonFile) {
-        const text = await astJsonFile.async("string");
-        astJsonSection.style.display = "block";
-        astJsonBox.textContent = JSON.stringify(JSON.parse(text), null, 2);
-    } else {
-        astJsonSection.style.display = "none";
-        astJsonBox.textContent = "";
+        // AST 분석
+        const summary = analyzeAST(ast);
+        latestSummary = summary;
+
+        // ZIP 내부 ast.json 파일 처리
+        let existingAstJson = null;
+        if (astJsonFile) {
+            const text = await astJsonFile.async("string");
+            existingAstJson = JSON.parse(text);
+        }
+
+        // 최소 로딩 시간 보장
+        const elapsed = Date.now() - startTime;
+        if (elapsed < minLoadingTime) {
+            await new Promise(resolve => setTimeout(resolve, minLoadingTime - elapsed));
+        }
+
+        // UI 업데이트
+        displaySummary(appJsFile.name, summary);
+        resultBox.textContent = JSON.stringify(ast, null, 2);
+
+        if (existingAstJson) {
+            astJsonSection.style.display = "flex";
+            astJsonBox.textContent = JSON.stringify(existingAstJson, null, 2);
+        } else {
+            astJsonSection.style.display = "none";
+            astJsonBox.textContent = "";
+        }
+
+        // 결과 화면으로 전환
+        goToResultScreen();
+
+    } catch (error) {
+        console.error("파싱 오류:", error);
+        alert("❌ 파일 처리 중 오류가 발생했습니다.\n" + error.message);
+        goToUploadScreen();
     }
 }
 
@@ -239,16 +339,18 @@ function displaySummary(fileName, summary) {
 
     summaryBox.innerHTML = `
         <h3>📊 AST 요약 분석 결과</h3>
-        ✔ 함수 선언: <b>${summary.functions}</b><br>
-        ✔ 변수 선언: <b>${summary.variables}</b><br>
-        ✔ 이벤트 핸들러: <b>${summary.eventListeners}</b><br>
-        ✔ LOC: <b>${summary.loc}</b><br>
-        ✔ 파일 이름: <b>${fileName}</b><br>
-        ✔ 분석 시간: <b>${new Date().toLocaleTimeString()}</b><br><br>
+        <div class="summary-info">
+            ✔ 함수 선언: <b>${summary.functions}</b><br>
+            ✔ 변수 선언: <b>${summary.variables}</b><br>
+            ✔ 이벤트 핸들러: <b>${summary.eventListeners}</b><br>
+            ✔ LOC: <b>${summary.loc}</b><br>
+            ✔ 파일 이름: <b>${fileName}</b><br>
+            ✔ 분석 시간: <b>${new Date().toLocaleTimeString()}</b>
+        </div>
 
         <div class="quality-wrapper">
 
-            <!-- 왼쪽 패널 -->
+            <!-- 코드 품질 지표 -->
             <div class="quality-left">
                 <h3>🧪 코드 품질 지표</h3>
                 • 함수 복잡도 점수: <b>${qualityScore.funcScore}</b> / 100<br>
@@ -259,22 +361,22 @@ function displaySummary(fileName, summary) {
                 📘 <b>총합 코드 품질 점수: ${qualityScore.total} 점</b>
             </div>
 
-            <!-- 오른쪽 패널 -->
+            <!-- 확장 코드 메트릭 -->
             <div class="quality-right">
                 <h3>📐 확장 코드 메트릭</h3>
-                • LOC <span style="color:#aaa">(코드 라인 수)</span>: <b>${extended.loc}</b><br>
-                • Cyclomatic Complexity <span style="color:#aaa">(분기 복잡도)</span>: <b>${extended.cyclomatic}</b><br>
-                • Coupling (CBO) <span style="color:#aaa">(결합도)</span>: <b>${extended.cbo}</b><br>
-                • RFC <span style="color:#aaa">(응답 메서드 수)</span>: <b>${extended.rfc}</b><br>
-                • Fan-out <span style="color:#aaa">(다른 모듈로의 의존)</span>: <b>${extended.fanOut}</b><br>
-                • Cohesion (LCOM) <span style="color:#aaa">(응집도 부족)</span>: <b>${extended.lcom}</b><br>
-                • TCC <span style="color:#aaa">(강한 클래스 응집도)</span>: <b>${extended.tcc.toFixed(2)}</b><br>
-                • DIT <span style="color:#aaa">(상속 깊이)</span>: <b>${extended.dit}</b><br>
-                • NOC <span style="color:#aaa">(자식 클래스 수)</span>: <b>${extended.noc}</b><br>
-                • WMC <span style="color:#aaa">(가중 메서드 수)</span>: <b>${extended.wmc}</b><br>
-                • Halstead Volume <span style="color:#aaa">(할스테드 볼륨)</span>: <b>${extended.halsteadVolume}</b><br>
-                • Halstead Effort <span style="color:#aaa">(할스테드 노력치)</span>: <b>${extended.halsteadEffort}</b><br>
-                • Maintainability Index <span style="color:#aaa">(유지보수 지수)</span>: <b>${extended.maintainabilityIndex}</b><br>
+                • LOC <span style="color:#888">(코드 라인 수)</span>: <b>${extended.loc}</b><br>
+                • Cyclomatic Complexity <span style="color:#888">(분기 복잡도)</span>: <b>${extended.cyclomatic}</b><br>
+                • Coupling (CBO) <span style="color:#888">(결합도)</span>: <b>${extended.cbo}</b><br>
+                • RFC <span style="color:#888">(응답 메서드 수)</span>: <b>${extended.rfc}</b><br>
+                • Fan-out <span style="color:#888">(다른 모듈로의 의존)</span>: <b>${extended.fanOut}</b><br>
+                • Cohesion (LCOM) <span style="color:#888">(응집도 부족)</span>: <b>${extended.lcom}</b><br>
+                • TCC <span style="color:#888">(강한 클래스 응집도)</span>: <b>${extended.tcc.toFixed(2)}</b><br>
+                • DIT <span style="color:#888">(상속 깊이)</span>: <b>${extended.dit}</b><br>
+                • NOC <span style="color:#888">(자식 클래스 수)</span>: <b>${extended.noc}</b><br>
+                • WMC <span style="color:#888">(가중 메서드 수)</span>: <b>${extended.wmc}</b><br>
+                • Halstead Volume <span style="color:#888">(할스테드 볼륨)</span>: <b>${extended.halsteadVolume}</b><br>
+                • Halstead Effort <span style="color:#888">(할스테드 노력치)</span>: <b>${extended.halsteadEffort}</b><br>
+                • Maintainability Index <span style="color:#888">(유지보수 지수)</span>: <b>${extended.maintainabilityIndex}</b>
             </div>
 
         </div>

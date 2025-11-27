@@ -17,29 +17,79 @@
 
 <body>
 
-    <h1>⚡ JavaScript Code Parsing + AST Summary</h1>
+    <!-- ================================
+         화면 1: 초기 업로드 화면
+    ================================ -->
+    <section id="uploadScreen" class="screen active">
+        <div class="upload-container">
+            <h1>⚡ JavaScript Code Parsing + AST Summary</h1>
 
-    <label for="zipUpload" id="dropZone" class="upload-box">
-        <p>📦 ZIP 파일 업로드 또는 드래그 앤 드롭</p>
-        <p style="font-size: 13px; color:#aaa;">(JavaScript 파일 포함)</p>
-        <button id="fileButton" type="button" class="file-select-btn">파일 선택</button>
-    </label>
+            <label for="zipUpload" id="dropZone" class="upload-box">
+                <p class="upload-icon">📦</p>
+                <p class="upload-text">ZIP 파일 업로드 또는 드래그 앤 드롭</p>
+                <p class="upload-hint">(JavaScript 파일 포함)</p>
+                <button id="fileButton" type="button" class="file-select-btn">파일 선택</button>
+            </label>
 
-    <input type="file" id="zipUpload" accept=".zip">
+            <input type="file" id="zipUpload" accept=".zip">
+        </div>
+    </section>
 
-    <div id="summaryBox">📝 AST 요약이 여기에 표시됩니다.</div>
+    <!-- ================================
+         화면 2: 로딩 화면
+    ================================ -->
+    <section id="loadingScreen" class="screen">
+        <div class="loading-container">
+            <div class="loader">
+                <div class="loader-ring"></div>
+                <div class="loader-ring"></div>
+                <div class="loader-ring"></div>
+            </div>
+            <p class="loading-text">AST 파싱 중...</p>
+            <p class="loading-subtext" id="loadingFileName"></p>
+        </div>
+    </section>
 
-    <!-- 코드 결과 1: Meriyah로 파싱한 app.js AST -->
-    <div class="code-section">
-        <div class="code-title">📄 app.js AST (Meriyah 파싱 결과)</div>
-        <div id="result" class="code-box">AST 전체 JSON이 여기에 표시됩니다.</div>
-    </div>
+    <!-- ================================
+         화면 3: 결과 화면 (좌/우 분할)
+    ================================ -->
+    <section id="resultScreen" class="screen">
+        <!-- 상단 헤더 -->
+        <header class="result-header">
+            <h1>⚡ AST 분석 결과</h1>
+            <button id="newAnalysisBtn" class="new-analysis-btn">+ 새 분석</button>
+        </header>
 
-    <!-- 코드 결과 2: ZIP 내부 ast.json 파일 내용 -->
-    <div class="code-section" id="astJsonSection" style="display:none;">
-        <div class="code-title">📁 ZIP 내부 ast.json (이미 존재하는 AST 파일)</div>
-        <div id="astJsonBox" class="code-box">ZIP 내부 ast.json 결과가 여기에 표시됩니다.</div>
-    </div>
+        <!-- 메인 컨텐츠 (좌/우 분할) -->
+        <div class="result-container">
+            
+            <!-- 좌측: 분석 결과 -->
+            <div class="result-left">
+                <div id="summaryBox" class="summary-box">
+                    <!-- 분석 결과가 여기에 표시됩니다 -->
+                </div>
+            </div>
+
+            <!-- 우측: AST JSON -->
+            <div class="result-right">
+                <div class="code-section">
+                    <div class="code-title">
+                        <span>📄 app.js AST (Meriyah 파싱 결과)</span>
+                    </div>
+                    <div id="result" class="code-box"></div>
+                </div>
+
+                <!-- ZIP 내부 ast.json (있을 경우) -->
+                <div class="code-section" id="astJsonSection" style="display:none;">
+                    <div class="code-title">
+                        <span>📁 ZIP 내부 ast.json</span>
+                    </div>
+                    <div id="astJsonBox" class="code-box"></div>
+                </div>
+            </div>
+
+        </div>
+    </section>
 
     <!-- External JavaScript -->
     <script src="app.js"></script>
